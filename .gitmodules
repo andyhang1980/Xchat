@@ -1,0 +1,9 @@
+[submodule "comptime-kt"]
+	path = libs/external/comptime-kt
+	url = https://github.com/Ujhhgtg/comptime-kt
+[submodule "libs/common/bsh"]
+	path = libs/common/bsh
+	url = https://github.com/Ujhhgtg/bsh
+[submodule "libs/common/reflekt"]
+	path = libs/common/reflekt
+	url = https://github.com/Ujhhgtg/reflekt

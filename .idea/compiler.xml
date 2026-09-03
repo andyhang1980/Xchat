@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel target="21">
+      <module name="xchat.bsh-lambda-300-eee36c8" target="25" />
+      <module name="xchat.libs.common.libxposed-api" target="25" />
+      <module name="xchat.libs.util.libxposed.api" target="21" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="xchat.libs.external.comptime-kt.plugin" options="-proc:none" />
+      <module name="xchat.libs.external.comptime-kt.plugin.main" options="-proc:none" />
+      <module name="xchat.libs.external.comptime-kt.plugin.test" options="-proc:none" />
+      <module name="xchat.libs.external.nameof-kt.plugin" options="-proc:none" />
+      <module name="xchat.libs.external.nameof-kt.plugin.main" options="-proc:none" />
+      <module name="xchat.libs.external.nameof-kt.plugin.test" options="-proc:none" />
+      <module name="xchat.libs.external.nameofkt.plugin" options="-proc:none" />
+      <module name="xchat.libs.external.nameofkt.plugin.main" options="-proc:none" />
+      <module name="xchat.libs.external.nameofkt.plugin.test" options="-proc:none" />
+    </option>
+  </component>
+</project>

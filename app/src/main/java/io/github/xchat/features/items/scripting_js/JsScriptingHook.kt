@@ -1,0 +1,98 @@
+package io.github.xchat.features.items.scripting_js
+
+import android.content.ContentValues
+import dev.ujhhgtg.comptime.This
+import io.github.xchat.features.api.core.WeDatabaseListenerApi
+import io.github.xchat.features.api.net.WeProtoData
+import io.github.xchat.features.api.net.abc.IWePacketInterceptor
+import io.github.xchat.features.core.Feature
+import io.github.xchat.features.core.SwitchFeature
+import io.github.xchat.utils.WeLogger
+import io.github.xchat.utils.fs.KnownPaths
+import io.github.xchat.utils.fs.createDirsSafe
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.div
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.readText
+
+@Feature(name = "脚本引擎 (JS)", categories = ["脚本 (JS)"], description = "执行 JavaScript 脚本")
+object JsScriptingHook : SwitchFeature(),
+    WeDatabaseListenerApi.IInsertListener, IWePacketInterceptor {
+
+    private val TAG = This.Class.simpleName
+
+    private val SCRIPTS_DIR = (KnownPaths.moduleData / "scripts_js").createDirsSafe()
+
+    val scripts = ConcurrentHashMap<String, String>()
+
+    override fun onEnable() {
+        WeDatabaseListenerApi.addListener(this)
+
+        WeLogger.d(TAG, "loading js scripts...")
+        for (path in SCRIPTS_DIR.listDirectoryEntries("*.js")) {
+            val name = path.name
+            val content = runCatching { path.readText() }.getOrElse { continue }
+            WeLogger.d(TAG, "loaded script, name='${name}', length=${content.length}")
+            scripts[name] = content
+        }
+
+        JsEngine.executeAllOnLoad(scripts)
+    }
+
+    // --- onMessage ---
+    override fun onInsert(table: String, values: ContentValues) {
+        if (!isEnabled) return
+        if (!OnMessage.isEnabled) return
+
+        if (table != "message") return
+
+        val isSend = values.getAsInteger("isSend") ?: return
+
+        val talker = values.getAsString("talker") ?: return
+        val content = values.getAsString("content") ?: return
+        val type = values.getAsInteger("type") ?: 0
+
+        JsEngine.executeAllOnMessage(scripts, talker, content, type, isSend)
+    }
+
+    override fun onDisable() {
+        WeDatabaseListenerApi.removeListener(this)
+        scripts.clear()
+    }
+
+    // --- onRequest ---
+    override fun onRequest(uri: String, cgiId: Int, reqBytes: ByteArray): ByteArray? {
+        if (!isEnabled) return null
+        if (!OnRequest.isEnabled) return null
+
+        try {
+            val data = WeProtoData.fromBytes(reqBytes)
+            val json = data.toJsonObject()
+            val modifiedJson = JsEngine.executeAllOnRequest(uri, cgiId, json)
+            data.applyViewJson(modifiedJson, true)
+            return data.toPacketBytes()
+        } catch (e: Exception) {
+            WeLogger.e(TAG, "onRequest failed", e)
+        }
+
+        return null
+    }
+
+    // --- onResponse ---
+    override fun onResponse(uri: String, cgiId: Int, respBytes: ByteArray): ByteArray? {
+        if (!isEnabled) return null
+        if (!OnResponse.isEnabled) return null
+
+        try {
+            val data = WeProtoData.fromBytes(respBytes)
+            val json = data.toJsonObject()
+            val modifiedJson = JsEngine.executeAllOnResponse(uri, cgiId, json)
+            data.applyViewJson(modifiedJson, true)
+            return data.toPacketBytes()
+        } catch (e: Exception) {
+            WeLogger.e(TAG, "onResponse failed", e)
+        }
+        return null
+    }
+}
