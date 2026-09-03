@@ -1,0 +1,369 @@
+package io.github.xchat.features.items.beautify
+
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.graphics.Color
+import android.os.Build
+import android.os.Bundle
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import androidx.activity.ComponentActivity
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.core.view.postDelayed
+import coil3.load
+import coil3.request.crossfade
+import dev.ujhhgtg.comptime.This
+import dev.ujhhgtg.reflekt.reflekt
+import io.github.xchat.activity.TransparentActivity
+import io.github.xchat.constants.PackageNames
+import io.github.xchat.features.core.ClickableFeature
+import io.github.xchat.features.core.Feature
+import io.github.xchat.preferences.WePrefs.Companion.prefOption
+import io.github.xchat.ui.content.AlertDialogContent
+import io.github.xchat.ui.content.Button
+import io.github.xchat.ui.content.DefaultColumn
+import io.github.xchat.ui.content.TextButton
+import io.github.xchat.ui.utils.showComposeDialog
+import io.github.xchat.utils.HostInfo
+import io.github.xchat.utils.WeLogger
+import io.github.xchat.utils.android.showToast
+import io.github.xchat.utils.nul
+import kotlin.math.max
+import kotlin.math.roundToInt
+
+@Feature(
+    name = "应用全局背景", categories = ["界面美化"],
+    description = "将微信背景全局替换为图片"
+)
+object ApplyGlobalBackground : ClickableFeature() {
+
+    private val TAG = This.Class.simpleName
+
+    private var backgroundUri by prefOption("global_bg_uri", nul<String>())
+    private var transparentStatusBar by prefOption("global_bg_transparent_status_bar", false)
+    private var opacity by prefOption("global_bg_opacity", 0.35f)
+
+    private const val OVERLAY_TAG = "xchat_global_bg_overlay"
+    private const val APPLIED_URI_TAG_KEY = 0x55020001
+    private const val APPLY_STATUS_BAR_DELAY_MS = 80L
+
+    private val blacklistedActivities = setOf(
+        "${PackageNames.WECHAT}.plugin.sns.ui.SnsOnlineVideoActivity",
+        "${PackageNames.WECHAT}.plugin.recordvideo.activity.MMRecordUI",
+        "${PackageNames.WECHAT}.plugin.thumbplayer.view.ThumbPlayerViewContainer",
+        "${PackageNames.WECHAT}.plugin.thumbplayer.view.ThumbPlayerVideoView",
+        "${PackageNames.WECHAT}.plugin.fav.ui.detail.FavoriteImgDetailUI",
+        "${PackageNames.WECHAT}.plugin.scanner.ui.BaseScanUI",
+        "${PackageNames.WECHAT}.plugin.finder.ui.FinderHomeAffinityUI",
+        "${PackageNames.WECHAT}.plugin.lite.ui.WxaLiteAppLiteUI",
+        "${PackageNames.WECHAT}.ui.chatting.gallery.ImageGalleryUI",
+        "${PackageNames.WECHAT}.plugin.gallery.picker.view.ImageCropUI",
+        "${PackageNames.WECHAT}.plugin.sns.ui.SnsBrowseUI",
+        "${PackageNames.WECHAT}.plugin.finder.ui.FinderShareFeedRelUI",
+        "${PackageNames.WECHAT}.plugin.gallery.ui.ImagePreviewUI",
+        "${PackageNames.WECHAT}.plugin.gallery.ui.AlbumPreviewUI",
+        "${PackageNames.WECHAT}.plugin.luckymoney.ui.LuckyMoneyBeforeDetailUI",
+        "${PackageNames.WECHAT}.plugin.location_soso.SoSoProxyUI",
+        "${PackageNames.WECHAT}.plugin.finder.feed.ui.FinderProfileTimeLineUI",
+        "${PackageNames.WECHAT}.plugin.sns.ui.SnsGalleryUI",
+        "${PackageNames.WECHAT}.pluginsdk.ui.ProfileHdHeadImg",
+        "${PackageNames.WECHAT}.plugin.brandservice.ui.timeline.preload.ui.TmplWebViewMMUI"
+    )
+
+    override fun onEnable() {
+        Activity::class.reflekt().apply {
+            firstMethod {
+                name = "onCreate"
+                parameters(Bundle::class)
+            }.hookAfter {
+                val activity = thisObject as Activity
+                applyTransparentStatusBarIfEnabled(activity)
+            }
+
+            firstMethod {
+                name = "onStart"
+                parameterCount = 0
+            }.hookAfter {
+                val activity = thisObject as Activity
+                applyTransparentStatusBarIfEnabled(activity)
+            }
+
+            firstMethod {
+                name = "onResume"
+                parameterCount = 0
+            }
+                .hookAfter {
+                    val activity = thisObject as Activity
+                    applyTransparentStatusBarIfEnabled(activity)
+                    applyBackground(activity)
+                }
+
+            firstMethod {
+                name = "onWindowFocusChanged"
+                parameters(Boolean::class)
+            }.hookAfter {
+                val activity = thisObject as Activity
+                applyTransparentStatusBarIfEnabled(activity)
+            }
+        }
+    }
+
+    override fun onClick(context: ComponentActivity) {
+        showComposeDialog(context) {
+            var hasImage by remember { mutableStateOf(backgroundUri != null) }
+            var opacityInput by remember { mutableFloatStateOf(opacity) }
+            var transparentStatusBarInput by remember { mutableStateOf(transparentStatusBar) }
+
+            AlertDialogContent(
+                title = { Text("应用全局背景") },
+                text = {
+                    DefaultColumn {
+                        Text(
+                            text = if (hasImage) {
+                                "已设置背景图片"
+                            } else {
+                                "未设置背景图片"
+                            },
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(onClick = {
+                                opacity = opacityInput.coerceIn(0.01f, 1f)
+                                transparentStatusBar = transparentStatusBarInput
+                                onDismiss()
+                                selectBackgroundImage(context)
+                            }) {
+                                Text("选择图片")
+                            }
+                            TextButton(
+                                enabled = hasImage,
+                                onClick = {
+                                    backgroundUri = null
+                                    hasImage = false
+                                    showToast("已清除背景图片, 重启微信生效")
+                                }
+                            ) {
+                                Text("清除图片")
+                            }
+                        }
+                        Text(
+                            text = "透明度: ${(opacityInput * 100f).roundToInt()}%",
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        Slider(
+                            value = opacityInput,
+                            onValueChange = { opacityInput = it.coerceIn(0.01f, 1f) },
+                            valueRange = 0f..1f
+                        )
+                        ListItem(
+                            headlineContent = { Text("状态栏背景透明") },
+                            supportingContent = { Text("设置状态栏背景为透明") },
+                            trailingContent = {
+                                Switch(
+                                    checked = transparentStatusBarInput,
+                                    onCheckedChange = { transparentStatusBarInput = it }
+                                )
+                            },
+                            modifier = Modifier.clickable {
+                                transparentStatusBarInput = !transparentStatusBarInput
+                            }
+                        )
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = onDismiss) { Text("取消") }
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        opacity = opacityInput.coerceIn(0.01f, 1f)
+                        transparentStatusBar = transparentStatusBarInput
+                        showToast("已保存, 重启微信生效")
+                        onDismiss()
+                    }) {
+                        Text("保存")
+                    }
+                }
+            )
+        }
+    }
+
+    private fun applyTransparentStatusBarIfEnabled(activity: Activity) {
+        if (!transparentStatusBar) return
+        applyTransparentStatusBar(activity)
+    }
+
+    @Suppress("DEPRECATION")
+    private fun applyTransparentStatusBar(activity: Activity) {
+        runCatching {
+            val window = activity.window ?: return
+            val decor = window.decorView as? ViewGroup ?: return
+
+            window.statusBarColor = Color.TRANSPARENT
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                window.isStatusBarContrastEnforced = false
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                window.setDecorFitsSystemWindows(false)
+            } else {
+                @Suppress("DEPRECATION")
+                decor.systemUiVisibility = decor.systemUiVisibility or
+                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            }
+
+            clearStatusBarBackground(activity, decor)
+            decor.postDelayed(APPLY_STATUS_BAR_DELAY_MS) {
+                clearStatusBarBackground(activity, decor)
+            }
+        }.onFailure {
+            WeLogger.w(TAG, "failed to apply transparent status bar", it)
+        }
+    }
+
+    @SuppressLint("DiscouragedApi")
+    private fun clearStatusBarBackground(activity: Activity, decor: ViewGroup) {
+        val statusBarBackgroundId = activity.resources.getIdentifier(
+            "statusBarBackground",
+            "id",
+            "android"
+        )
+
+        if (statusBarBackgroundId != 0) {
+            decor.findViewById<View>(statusBarBackgroundId)?.makeTransparent()
+        }
+
+        setLastViewsTransparent(decor, 3)
+    }
+
+    private fun setLastViewsTransparent(viewGroup: ViewGroup, count: Int) {
+        val start = max(0, viewGroup.childCount - count)
+        for (index in start until viewGroup.childCount) {
+            val child = viewGroup.getChildAt(index)
+            val name = child.resourceEntryName().orEmpty()
+            if (name == "statusBarBackground" || child.height <= statusBarHeightGuess(child)) {
+                child.makeTransparent()
+            }
+        }
+    }
+
+    private fun applyBackground(activity: Activity) {
+        if (backgroundUri == null) return
+        if (activity.javaClass.name in blacklistedActivities) return
+
+        val uri = backgroundUri ?: return
+        val decor = activity.window?.decorView as? ViewGroup ?: return
+        val overlay = findOverlay(decor) ?: createOverlay(activity, decor)
+
+        overlay.alpha = opacity
+        overlay.bringToFront()
+
+        if (overlay.getTag(APPLIED_URI_TAG_KEY) != uri) {
+            overlay.setTag(APPLIED_URI_TAG_KEY, uri)
+            overlay.load(uri) {
+                crossfade(true)
+            }
+        }
+    }
+
+    private fun createOverlay(context: Context, decor: ViewGroup): ImageView {
+        return ImageView(context).apply {
+            tag = OVERLAY_TAG
+            background = null
+            isClickable = false
+            isFocusable = false
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            decor.addView(this)
+        }
+    }
+
+    private fun findOverlay(decor: ViewGroup): ImageView? {
+        for (index in 0 until decor.childCount) {
+            val child = decor.getChildAt(index)
+            if (child is ImageView && child.tag == OVERLAY_TAG) {
+                return child
+            }
+        }
+        return null
+    }
+
+    private fun View.makeTransparent() {
+        setBackgroundColor(Color.TRANSPARENT)
+        setBackgroundResource(0)
+    }
+
+    private fun View.resourceEntryName(): String? {
+        val viewId = id
+        if (viewId == View.NO_ID) return null
+        return runCatching {
+            resources.getResourceEntryName(viewId)
+        }.getOrNull()
+    }
+
+    @SuppressLint("DiscouragedApi", "InternalInsetResource")
+    private fun statusBarHeightGuess(view: View): Int {
+        val resourceId = view.resources.getIdentifier("status_bar_height", "dimen", "android")
+        return if (resourceId > 0) {
+            view.resources.getDimensionPixelSize(resourceId)
+        } else {
+            (32f * view.resources.displayMetrics.density).toInt()
+        }
+    }
+
+    private fun selectBackgroundImage(context: ComponentActivity) {
+        TransparentActivity.launch(context) {
+            val launcher = registerForActivityResult(
+                ActivityResultContracts.PickVisualMedia()
+            ) { uri ->
+                finish()
+                if (uri == null) return@registerForActivityResult
+
+                val contentResolver = HostInfo.application.contentResolver
+                runCatching {
+                    contentResolver.takePersistableUriPermission(
+                        uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                }.onFailure {
+                    WeLogger.w(TAG, "failed to take persistable uri permission", it)
+                }
+
+                backgroundUri = uri.toString()
+                showToast("背景图片已设置, 重启微信生效")
+            }
+
+            launcher.launch(
+                PickVisualMediaRequest(
+                    ActivityResultContracts.PickVisualMedia.ImageOnly
+                )
+            )
+        }
+    }
+}

@@ -1,0 +1,22 @@
+console.log("Script loaded");
+Java.perform(() => {
+    console.log("Java.perform entered");
+    const ActivityThread = Java.use("android.app.ActivityThread");
+    const activityThread = ActivityThread.currentActivityThread();
+    const ctx = activityThread.getApplication();
+    console.log("ctx:", ctx);
+    const ai = ctx.getPackageManager().getPackageInfo("io.github.xchat", 0).applicationInfo;
+    const modulePath = ai.sourceDir.value;
+    console.log("applicationInfo:", ai);
+    console.log("modulePath:", modulePath);
+    const BaseDexClassLoader = Java.use("dalvik.system.BaseDexClassLoader");
+    const StringClass = Java.use("java.lang.Class").forName("java.lang.String");
+    const parent = Java.use("java.lang.Class").forName("java.lang.Class").getClassLoader();
+    const cl = BaseDexClassLoader.$new(modulePath, null, null, parent);
+    console.log("BaseDexClassLoader:", cl);
+    const FridaInjectEntry = cl.loadClass("io.github.xchat.loader.entry.frida.FridaInjectEntry");
+    console.log("FridaInjectEntry:", FridaInjectEntry);
+    const entry1 = FridaInjectEntry.getMethod("entry1", Java.array("java.lang.Class", [StringClass]));
+    console.log("entry1:", entry1);
+    entry1.invoke(null, Java.array("java.lang.String", "/data/app/~~Te8XiCJqd0n48hs3YD4hfw==/io.github.xchat-2187zSyUON9EhHhTXTAluA==/base.apk"));
+});
