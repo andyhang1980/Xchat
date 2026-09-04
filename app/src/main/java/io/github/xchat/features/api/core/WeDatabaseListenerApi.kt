@@ -7,7 +7,6 @@ import dev.ujhhgtg.comptime.This
 import dev.ujhhgtg.reflekt.reflekt
 import dev.ujhhgtg.reflekt.utils.toClass
 import io.github.xchat.constants.Preferences
-import io.github.xchat.constants.WeChatVersions
 import io.github.xchat.features.core.ApiFeature
 import io.github.xchat.features.core.Feature
 import io.github.xchat.utils.HostInfo
@@ -157,14 +156,16 @@ object WeDatabaseListenerApi : ApiFeature() {
     // ==================== Query Hook ====================
 
     private fun hookDatabaseQuery() {
-        val isPlay = HostInfo.isHostGooglePlay
-        val version = HostInfo.versionCode
-        val isNewVersion = !isPlay && version >= WeChatVersions.MM_8_0_43 || isPlay && version >= WeChatVersions.MM_8_0_48_PLAY
-
-        if (isNewVersion) {
+        // 自动适配: 尝试新版 API, 失败则回退到旧版
+        var hooked = false
+        runCatching {
             hookNewQueryMethod()
-        } else {
-            hookOldQueryMethod()
+            hooked = true
+        }
+        if (!hooked) {
+            runCatching {
+                hookOldQueryMethod()
+            }
         }
     }
 

@@ -19,7 +19,7 @@ import dev.ujhhgtg.reflekt.utils.Modifiers
 import dev.ujhhgtg.reflekt.utils.createInstance
 import dev.ujhhgtg.reflekt.utils.isBuiltin
 import dev.ujhhgtg.reflekt.utils.makeAccessible
-import io.github.xchat.constants.WeChatVersions
+
 import io.github.xchat.dexkit.abc.IResolveDex
 import io.github.xchat.dexkit.dsl.dexClass
 import io.github.xchat.dexkit.dsl.dexConstructor
@@ -443,10 +443,10 @@ object WeMessageApi : ApiFeature(), IResolveDex {
         val taskClassName = methodImageSendEntry.method.parameterTypes[1]
         classImageTask.setDescriptor(taskClassName.name)
 
-        if (HostInfo.versionCode >= WeChatVersions.MM_8_0_67 && !HostInfo.isHostGooglePlay ||
-            HostInfo.versionCode >= WeChatVersions.MM_8_0_66_PLAY && HostInfo.isHostGooglePlay
-        ) {
-            methodImgUploadFeatureServiceSendImage.find(dexKit) {
+        // 自动适配: 尝试新版 API, 失败则回退到旧版
+        var useNewApi = false
+        runCatching {
+            methodImgUploadFeatureServiceSendImage.find(dexKit, allowFailure = true) {
                 matcher {
                     declaredClass {
                         usingEqStrings("MicroMsg.ImgUpload.MsgImgFeatureService", "taskListener", "params")
@@ -456,25 +456,27 @@ object WeMessageApi : ApiFeature(), IResolveDex {
                     usingEqStrings("params")
                 }
             }
+            if (!methodImgUploadFeatureServiceSendImage.isPlaceholder) {
+                methodAppInfoSetAppId.find(dexKit) {
+                    matcher {
+                        declaredClass {
+                            usingEqStrings("appinfo", "appid", "version", "appname", "isforceupdate", "messageaction", "messageext", "mediatagname")
+                        }
 
-            methodAppInfoSetAppId.find(dexKit) {
-                matcher {
-                    declaredClass {
-                        usingEqStrings("appinfo", "appid", "version", "appname", "isforceupdate", "messageaction", "messageext", "mediatagname")
+                        paramTypes(BString)
+                        usingNumbers(0)
                     }
-
-                    paramTypes(BString)
-                    usingNumbers(0)
                 }
+                ctorNetSceneUploadMsgImg.setPlaceholderDescriptor()
+                useNewApi = true
             }
+        }
 
-            ctorNetSceneUploadMsgImg.setPlaceholderDescriptor()
-        } else {
+        if (!useNewApi) {
             methodImgUploadFeatureServiceSendImage.setPlaceholderDescriptor()
-
             methodAppInfoSetAppId.setPlaceholderDescriptor()
 
-            ctorNetSceneUploadMsgImg.find(dexKit) {
+            ctorNetSceneUploadMsgImg.find(dexKit, allowFailure = true) {
                 searchPackages("com.tencent.mm.modelimage")
                 matcher {
                     name = "<init>"
@@ -861,9 +863,8 @@ object WeMessageApi : ApiFeature(), IResolveDex {
     private val ctorNetSceneUploadMsgImg by dexConstructor()
 
     fun sendImageByMd5(toUser: String, md5: String, appMsgAppId: String? = null) {
-        if (HostInfo.versionCode >= WeChatVersions.MM_8_0_67 && !HostInfo.isHostGooglePlay ||
-            HostInfo.versionCode >= WeChatVersions.MM_8_0_66_PLAY && HostInfo.isHostGooglePlay
-        ) {
+        // 自动适配: 根据已解析的 API 选择实现方式
+        if (!methodImgUploadFeatureServiceSendImage.isPlaceholder) {
             val sendImageMethod = methodImgUploadFeatureServiceSendImage.method
             val paramsClass = sendImageMethod.parameterTypes[0]
             val crossParamsClass = paramsClass.reflekt()
