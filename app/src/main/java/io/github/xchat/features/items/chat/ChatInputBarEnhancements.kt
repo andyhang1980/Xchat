@@ -136,80 +136,97 @@ object ChatInputBarEnhancements : SwitchFeature(), IResolveDex {
                 }!!
 
                 voiceButton.setOnLongClickListener { view ->
-                    selectAndSendVoice(view.context, WeCurrentConversationApi.value)
+                    val context = view.context
+                    val content = chatFooter.lastText
+                    if (content.isEmpty()) {
+                        showToast("输入内容为空!")
+                        return@setOnLongClickListener true
+                    }
+                    synthesizeAndSendVoice(
+                        WeCurrentConversationApi.value, content, ttsVoice
+                    ) { chatFooter.lastText = "" }
                     return@setOnLongClickListener true
                 }
 
-                listOf(menuButton, sendButton).forEach {
-                    it.setOnLongClickListener { view ->
-                        val context = view.context
+                menuButton.setOnLongClickListener { view ->
+                    val context = view.context
+                    val content = chatFooter.lastText
+                    if (content.isEmpty()) {
+                        showToast("输入内容为空!")
+                        return@setOnLongClickListener true
+                    }
+                    synthesizeAndSendVoice(
+                        WeCurrentConversationApi.value, content, ttsVoice
+                    ) { chatFooter.lastText = "" }
+                    return@setOnLongClickListener true
+                }
 
-                        showComposeDialog(context) {
-                            AlertDialogContent(
-                                title = { Text("聊天功能") },
-                                text = {
-                                    Column {
-                                        ActionItem(
-                                            icon = MaterialSymbols.Outlined.Voice_chat,
-                                            label = "发送语音文件"
-                                        ) {
-                                            onDismiss()
-                                            selectAndSendVoice(context, WeCurrentConversationApi.value)
-                                        }
+                sendButton.setOnLongClickListener { view ->
+                    val context = view.context
 
-                                        ActionItem(
-                                            icon = MaterialSymbols.Outlined.Text_to_speech,
-                                            label = "文本转语音发送 (长按选音色)",
-                                            onLongClick = {
-                                                // 延迟到下一帧: combinedClickable 在 onLongClick 返回后还会
-                                                // 读取 CompositionLocal 做触感反馈, 若此处同步 onDismiss 会
-                                                // 立刻卸载节点导致 "Modifier node is not currently attached" 崩溃。
-                                                view.post {
-                                                    showVoicePicker(context)
-                                                }
-                                            }
-                                        ) {
-                                            onDismiss()
-                                            val currentConv = WeCurrentConversationApi.value
-                                            val content = chatFooter.lastText
+                    showComposeDialog(context) {
+                        AlertDialogContent(
+                            title = { Text("聊天功能") },
+                            text = {
+                                Column {
+                                    ActionItem(
+                                        icon = MaterialSymbols.Outlined.Voice_chat,
+                                        label = "发送语音文件"
+                                    ) {
+                                        onDismiss()
+                                        selectAndSendVoice(context, WeCurrentConversationApi.value)
+                                    }
 
-                                            if (content.isEmpty()) {
-                                                showToast("输入内容为空!")
-                                                return@ActionItem
-                                            }
-
-                                            synthesizeAndSendVoice(currentConv, content, ttsVoice) {
-                                                chatFooter.lastText = ""
+                                    ActionItem(
+                                        icon = MaterialSymbols.Outlined.Text_to_speech,
+                                        label = "文本转语音发送 (长按选音色)",
+                                        onLongClick = {
+                                            view.post {
+                                                showVoicePicker(context)
                                             }
                                         }
+                                    ) {
+                                        onDismiss()
+                                        val currentConv = WeCurrentConversationApi.value
+                                        val content = chatFooter.lastText
 
-                                        ActionItem(
-                                            icon = MaterialSymbols.Outlined.Send_time_extension,
-                                            label = "发送卡片消息"
-                                        ) {
-                                            onDismiss()
-                                            val currentConv = WeCurrentConversationApi.value
-                                            val content = chatFooter.lastText
+                                        if (content.isEmpty()) {
+                                            showToast("输入内容为空!")
+                                            return@ActionItem
+                                        }
 
-                                            if (content.isEmpty()) {
-                                                showToast("输入内容为空!")
-                                                return@ActionItem
-                                            }
-
-                                            val isSuccess = WeMessageApi.sendXmlAppMsg(currentConv, content)
-                                            if (!isSuccess) {
-                                                showToast("发送卡片消息失败, 请检查格式")
-                                                return@ActionItem
-                                            }
-
+                                        synthesizeAndSendVoice(currentConv, content, ttsVoice) {
                                             chatFooter.lastText = ""
                                         }
+                                    }
 
-                                        ActionItem(
-                                            icon = MaterialSymbols.Outlined.Alternate_email,
-                                            label = "@所有人"
-                                        ) {
-                                            onDismiss()
+                                    ActionItem(
+                                        icon = MaterialSymbols.Outlined.Send_time_extension,
+                                        label = "发送卡片消息"
+                                    ) {
+                                        onDismiss()
+                                        val currentConv = WeCurrentConversationApi.value
+                                        val content = chatFooter.lastText
+
+                                        if (content.isEmpty()) {
+                                            showToast("输入内容为空!")
+                                            return@ActionItem
+                                        }
+
+                                        val isSuccess = WeMessageApi.sendXmlAppMsg(currentConv, content)
+                                        if (!isSuccess) {
+                                            showToast("发送卡片消息失败, 请检查格式")
+                                            return@ActionItem
+                                        }
+
+                                        chatFooter.lastText = ""
+                                    }
+
+                                    ActionItem(
+                                        icon = MaterialSymbols.Outlined.Alternate_email,
+                                        label = "@所有人"
+                                    ) {
+                                        onDismiss()
 
                                             if (!WeCurrentConversationApi.value.isGroupChatWxId) {
                                                 showToast("只能在群组里使用!")
