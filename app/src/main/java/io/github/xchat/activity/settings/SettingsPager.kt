@@ -74,6 +74,7 @@ import io.github.xchat.aboutlibraries.AboutLibrariesProvider
 import io.github.xchat.activity.TransparentActivity
 import io.github.xchat.constants.PackageNames
 import io.github.xchat.constants.Preferences
+import io.github.xchat.features.items.blacklist.BlacklistMode
 import io.github.xchat.features.items.debug.ResetDexCache
 import io.github.xchat.preferences.WePrefs
 import io.github.xchat.ui.utils.GitHubIcon
@@ -237,6 +238,19 @@ fun SettingsPager(onOpenLicense: () -> Unit) {
                     summary = "清除全部模块配置 (警告: 此操作不可逆!)",
                     icon = MaterialSymbols.Outlined.Delete_forever,
                     onClick = { showClearConfirm = true },
+                )
+            }
+        }
+
+        // 黑名单
+        item {
+            SmallTitle(text = "黑名单", modifier = Modifier.padding(top = 12.dp))
+            Card(modifier = Modifier.fillMaxWidth()) {
+                PrefArrow(
+                    title = "黑名单管理",
+                    summary = "添加/移除黑名单, 执行删除联系人并从群中移除",
+                    icon = MaterialSymbols.Outlined.Block,
+                    onClick = { BlacklistMode.onClick(context) },
                 )
             }
         }

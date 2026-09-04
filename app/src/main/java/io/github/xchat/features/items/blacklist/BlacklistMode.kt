@@ -29,10 +29,14 @@ import androidx.compose.ui.unit.dp
 import dev.ujhhgtg.comptime.This
 import io.github.xchat.features.api.core.WeContactApi
 import io.github.xchat.features.api.core.WeDatabaseApi
+import io.github.xchat.features.api.core.WeGroupApi
+import io.github.xchat.features.api.core.WeApi
 import io.github.xchat.features.api.core.models.WeContact
+import io.github.xchat.features.api.net.models.protobuf.ChatRoomDataProto
 import io.github.xchat.features.core.ClickableFeature
 import io.github.xchat.features.core.Feature
 import io.github.xchat.preferences.WePrefs
+import kotlinx.serialization.protobuf.ProtoBuf
 import io.github.xchat.ui.content.AlertDialogContent
 import io.github.xchat.ui.content.Button
 import io.github.xchat.ui.content.ContactsSelector
@@ -175,8 +179,63 @@ object BlacklistMode : ClickableFeature() {
             if (index < ids.size - 1) delay(DELETE_INTERVAL_MS)
         }
 
+        // 从用户创建的群中移除黑名单成员
+        if (ids.isNotEmpty()) {
+            showToastSuspend("正在从群中移除黑名单成员...")
+            removeFromGroups(ids)
+        }
+
         // 成功删除的移出黑名单, 失败的保留以便重试
         blacklist = blacklist - succeeded.toSet()
+    }
+
+    /** 检查当前用户是否是群主 */
+    private fun isGroupOwner(groupId: String): Boolean {
+        val selfWxId = WeApi.selfWxId
+        try {
+            val cursor = WeDatabaseApi.rawQuery(
+                "SELECT roomdata FROM chatroom WHERE chatroomname = ?",
+                arrayOf(groupId)
+            )
+            cursor.use { cursor ->
+                if (cursor != null && cursor.moveToFirst()) {
+                    val blob = cursor.getBlob(0) ?: return false
+                    val data = ProtoBuf.decodeFromByteArray<ChatRoomDataProto>(blob)
+                    // 群主的 inviterWxId 为空
+                    return data.members.any { it.wxId == selfWxId && it.inviterWxId.isEmpty() }
+                }
+            }
+        } catch (e: Exception) {
+            WeLogger.e(TAG, "isGroupOwner check failed for $groupId", e)
+        }
+        return false
+    }
+
+    /** 从用户创建的群中移除黑名单成员 */
+    private suspend fun removeFromGroups(ids: List<String>) {
+        val groups = runCatching { WeDatabaseApi.getGroups() }.getOrNull().orEmpty()
+        val ownerGroups = groups.filter { isGroupOwner(it.wxId) }
+        if (ownerGroups.isEmpty()) {
+            WeLogger.i(TAG, "no owned groups found, skip group removal")
+            return
+        }
+
+        var removedCount = 0
+        ownerGroups.forEach { group ->
+            val members = runCatching { WeDatabaseApi.getGroupMembers(group.wxId) }.getOrNull().orEmpty()
+            val toRemove = members.filter { it.wxId in ids }
+            if (toRemove.isNotEmpty()) {
+                runCatching {
+                    WeGroupApi.delMembers(group.wxId, toRemove.map { it.wxId })
+                    removedCount += toRemove.size
+                    WeLogger.i(TAG, "removed ${toRemove.size} blacklisted members from group ${group.displayName}")
+                }
+                delay(DELETE_INTERVAL_MS)
+            }
+        }
+        if (removedCount > 0) {
+            showToastSuspend("已从 ${ownerGroups.size} 个群中移除 $removedCount 个黑名单成员")
+        }
     }
 
     @Composable
