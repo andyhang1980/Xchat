@@ -29,7 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.composables.icons.materialsymbols.MaterialSymbols
-import com.composables.icons.materialsymbols.outlined.Audiotrack
+import com.composables.icons.materialsymbols.outlined.Music_note
 import com.composables.icons.materialsymbols.outlined.Play_circle
 import com.composables.icons.materialsymbols.outlined.Send
 import dev.ujhhgtg.comptime.This
@@ -56,6 +56,8 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.div
 
+private const val TAG = "VoiceWorkbench"
+
 /**
  * 语音工作台 (整合 Wtonec 的语音工作流公开契约):
  *  1. 文字转语音: 基于免费的 Edge TTS, 支持音色 / 语速 / 音调 / 音量调节, 可试听与直接发送。
@@ -70,8 +72,6 @@ import kotlin.io.path.div
 object VoiceWorkbench : ClickableFeature() {
 
     override val noSwitchWidget = true
-
-    val TAG = This.Class.simpleName
 
     // Edge TTS 可选音色 (voice name -> 展示名称)。
     val TTS_VOICES = listOf(
@@ -281,7 +281,7 @@ private fun VoicePackTab() {
                         .padding(vertical = 6.dp)
                 ) {
                     Icon(
-                        MaterialSymbols.Outlined.Audiotrack,
+                        MaterialSymbols.Outlined.Music_note,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )

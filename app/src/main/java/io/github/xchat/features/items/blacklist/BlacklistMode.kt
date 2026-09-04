@@ -261,7 +261,7 @@ object BlacklistMode : ClickableFeature() {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                         Text("显示好友ID", style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.width(4.dp))
-                        Switch(checked = showFriendId, onCheckedChange = { showFriendId = it }) {}
+                        Switch(checked = showFriendId, onCheckedChange = { showFriendId = it })
                     }
 
                     // ---- 好友 ID 列表 (便于复制并加入黑名单) ----
