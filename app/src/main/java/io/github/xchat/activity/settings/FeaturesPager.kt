@@ -122,6 +122,7 @@ fun FeaturesPager(onOpenCategory: (String) -> Unit) {
                             item = item,
                             checked = switchStates[item.name] ?: WePrefs.getBoolOrFalse(item.name),
                             onCheckedChange = { switchStates[item.name] = it },
+                            onBeforeClick = { queryState.clearText() },
                         )
                     }
                 }

@@ -544,6 +544,7 @@ fun FeatureRow(
     item: BaseFeature,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
+    onBeforeClick: (() -> Unit)? = null,
 ) {
     val context = LocalComponentActivity.current
     val configKey = item.name
@@ -565,6 +566,7 @@ fun FeatureRow(
     when (item) {
         is ClickableFeature -> BasicComponent(
             onClick = {
+                onBeforeClick?.invoke()
                 runCatching { item.onClick(context) }
                     .onFailure { WeLogger.e(nameOf(SettingsActivity::class), "onClick failed for ${item.displayName}", it) }
             },
