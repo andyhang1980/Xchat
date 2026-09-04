@@ -1,6 +1,7 @@
 package io.github.xchat.constants
 
 object WeChatVersions {
+    const val MM_8_0_77 = 3160
     const val MM_8_0_72 = 3100
     const val MM_8_0_71 = 3080
     const val MM_8_0_70 = 3060

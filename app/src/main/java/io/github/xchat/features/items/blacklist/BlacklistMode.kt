@@ -197,9 +197,9 @@ object BlacklistMode : ClickableFeature() {
                 "SELECT roomdata FROM chatroom WHERE chatroomname = ?",
                 arrayOf(groupId)
             )
-            cursor.use { cursor ->
-                if (cursor != null && cursor.moveToFirst()) {
-                    val blob = cursor.getBlob(0) ?: return false
+            cursor.use { c ->
+                if (c.moveToFirst()) {
+                    val blob = c.getBlob(0) ?: return false
                     val data = ProtoBuf.decodeFromByteArray<ChatRoomDataProto>(blob)
                     // 群主的 inviterWxId 为空
                     return data.members.any { it.wxId == selfWxId && it.inviterWxId.isEmpty() }
