@@ -10,8 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -123,9 +122,7 @@ private fun FixedTabsPanel() {
     var tab by remember { mutableStateOf(0) }
 
     Column(
-        Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
+        Modifier.fillMaxWidth()
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             TabLabel("文字转语音", selected = tab == 0, onClick = { tab = 0 })
