@@ -44,7 +44,7 @@ fun showComposeDialog(
             setBackgroundDrawableResource(android.R.color.transparent)
             requestFeature(Window.FEATURE_NO_TITLE)
             if (useOverlayType && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                attributes = attributes.apply { type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY }
             }
         }
 
