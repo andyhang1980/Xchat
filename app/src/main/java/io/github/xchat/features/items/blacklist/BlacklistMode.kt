@@ -36,6 +36,7 @@ import io.github.xchat.features.api.net.models.protobuf.ChatRoomDataProto
 import io.github.xchat.features.core.ClickableFeature
 import io.github.xchat.features.core.Feature
 import io.github.xchat.preferences.WePrefs
+import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
 import io.github.xchat.ui.content.AlertDialogContent
 import io.github.xchat.ui.content.Button
