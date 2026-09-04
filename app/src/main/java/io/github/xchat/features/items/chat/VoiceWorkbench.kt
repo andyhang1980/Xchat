@@ -108,12 +108,11 @@ object VoiceWorkbench : ClickableFeature() {
         expanded = !expanded
     }
 
-    @Transient
-    var expanded = false
+    var expanded = androidx.compose.runtime.mutableStateOf(false)
 
     @Composable
     override fun Ui() {
-        if (expanded) {
+        if (expanded.value) {
             FixedTabsPanel()
         }
     }
