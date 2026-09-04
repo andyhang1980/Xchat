@@ -105,7 +105,7 @@ object VoiceWorkbench : ClickableFeature() {
     }
 
     override fun onClick(context: ComponentActivity) {
-        expanded = !expanded
+        expanded.value = !expanded.value
     }
 
     var expanded = androidx.compose.runtime.mutableStateOf(false)
