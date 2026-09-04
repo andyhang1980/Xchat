@@ -109,7 +109,7 @@ object VoiceWorkbench : ClickableFeature() {
 }
 
 private fun showVoiceWorkbench(context: android.content.Context) {
-    showComposeDialog(context) {
+    showComposeDialog(context, useOverlayType = true) {
         FixedTabsPanel(onDismiss = onDismiss)
     }
 }

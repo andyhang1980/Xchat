@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Color
 import android.view.View
 import android.view.Window
+import android.view.WindowManager
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
@@ -27,6 +28,7 @@ import io.github.xchat.ui.utils.theme.ModuleTheme
 fun showComposeDialog(
     context: Context,
     directlyDismissable: Boolean = true,
+    useOverlayType: Boolean = false,
     content: @Composable ShowComposeDialogScope.() -> Unit
 ) {
     val context = CommonContextWrapper.create(context)
@@ -41,6 +43,9 @@ fun showComposeDialog(
         window!!.apply {
             setBackgroundDrawableResource(android.R.color.transparent)
             requestFeature(Window.FEATURE_NO_TITLE)
+            if (useOverlayType && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            }
         }
 
         setCancelable(directlyDismissable)
