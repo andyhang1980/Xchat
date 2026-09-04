@@ -40,7 +40,6 @@ import io.github.xchat.features.core.ClickableFeature
 import io.github.xchat.features.core.Feature
 import io.github.xchat.preferences.WePrefs
 import io.github.xchat.ui.content.AlertDialogContent
-import io.github.xchat.ui.utils.showComposeDialog
 import io.github.xchat.utils.AudioUtils
 import io.github.xchat.utils.EdgeTtsClient
 import io.github.xchat.utils.WeLogger
@@ -104,19 +103,24 @@ object VoiceWorkbench : ClickableFeature() {
     val voicePackDir: File by lazy {
         (KnownPaths.downloads / "voicepack").toFile().apply { mkdirs() }
     }
-    override fun onClick(context: ComponentActivity) {
-        showVoiceWorkbench(context)
-    }
-}
 
-private fun showVoiceWorkbench(context: android.content.Context) {
-    showComposeDialog(context, useOverlayType = true) {
-        FixedTabsPanel(onDismiss = onDismiss)
+    override fun onClick(context: ComponentActivity) {
+        expanded = !expanded
+    }
+
+    @Transient
+    var expanded = false
+
+    @Composable
+    override fun Ui() {
+        if (expanded) {
+            FixedTabsPanel()
+        }
     }
 }
 
 @Composable
-private fun FixedTabsPanel(onDismiss: () -> Unit) {
+private fun FixedTabsPanel() {
     var tab by remember { mutableStateOf(0) }
 
     Column(
@@ -131,7 +135,7 @@ private fun FixedTabsPanel(onDismiss: () -> Unit) {
         Spacer(Modifier.padding(top = 8.dp))
 
         when (tab) {
-            0 -> TtsTab(onDismiss = onDismiss)
+            0 -> TtsTab()
             1 -> VoicePackTab()
         }
     }
@@ -151,7 +155,7 @@ private fun TabLabel(text: String, selected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun TtsTab(onDismiss: () -> Unit) {
+private fun TtsTab() {
     var text by remember { mutableStateOf("") }
     var voice by remember { mutableStateOf(VoiceWorkbench.ttsVoice) }
     var rate by remember { mutableStateOf(0f) }      // -50% .. +50%
@@ -235,7 +239,6 @@ private fun TtsTab(onDismiss: () -> Unit) {
                 player.value?.release()
                 player.value = null
                 previewPath = null
-                onDismiss()
                 VoiceWorkbench.ttsVoice = voice
                 VoiceWorkbench.ttsRate = rateArg
                 VoiceWorkbench.ttsPitch = pitchArg
