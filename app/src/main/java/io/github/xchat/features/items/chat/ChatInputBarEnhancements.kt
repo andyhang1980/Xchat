@@ -121,6 +121,7 @@ object ChatInputBarEnhancements : SwitchFeature(), IResolveDex {
             .firstConstructor {
                 parameters(Context::class, AttributeSet::class, Int::class)
             }.hookAfter {
+                WeLogger.d(nameOf(ChatInputBarEnhancements), "ChatFooter hookAfter fired")
                 val chatFooter = thisObject as ChatFooter
                 val searchedView = chatFooter.findViewByChildIndexes<View>(0)!!
                 val imgButtons = searchedView.findViewsWhich<ImageButton> { view ->
@@ -133,9 +134,11 @@ object ChatInputBarEnhancements : SwitchFeature(), IResolveDex {
                         val text = (view as AndroidButton).text?.toString()?.trim() ?: ""
                         text == "发送" || text.equals("send", ignoreCase = true)
                     }
-                }!!
+                }
+                WeLogger.d(nameOf(ChatInputBarEnhancements), "sendButton found: ${sendButton != null}")
 
                 voiceButton.setOnLongClickListener { view ->
+                    WeLogger.d(nameOf(ChatInputBarEnhancements), "voiceButton long click")
                     val content = chatFooter.lastText
                     if (content.isEmpty()) {
                         showToast("输入内容为空!")
@@ -159,7 +162,8 @@ object ChatInputBarEnhancements : SwitchFeature(), IResolveDex {
                     return@setOnLongClickListener true
                 }
 
-                sendButton.setOnLongClickListener { view ->
+                sendButton?.setOnLongClickListener { view ->
+                    WeLogger.d(nameOf(ChatInputBarEnhancements), "sendButton long click, text='${chatFooter.lastText}'")
                     val content = chatFooter.lastText
                     if (content.isEmpty()) {
                         showToast("输入内容为空!")
