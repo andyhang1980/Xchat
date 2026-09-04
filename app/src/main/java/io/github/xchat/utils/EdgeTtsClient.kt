@@ -11,8 +11,11 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpHeaders
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
+import io.github.xchat.preferences.WePrefs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.net.InetSocketAddress
+import java.net.Proxy
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -66,8 +69,18 @@ object EdgeTtsClient : AutoCloseable {
             " (KHTML, like Gecko) Chrome/${CHROMIUM_FULL_VERSION.substringBefore('.')}.0.0.0" +
             " Safari/537.36 Edg/${CHROMIUM_FULL_VERSION.substringBefore('.')}.0.0.0"
 
-    private val httpClient = HttpClient(CIO) {
-        install(WebSockets)
+    private val httpClient by lazy {
+        val proxyHost = WePrefs.getStringOrDef("tts_proxy_host", "")
+        val proxyPort = WePrefs.getIntOrDef("tts_proxy_port", 0)
+        
+        HttpClient(CIO) {
+            install(WebSockets)
+            if (proxyHost.isNotBlank() && proxyPort > 0) {
+                engine {
+                    proxy = Proxy(Proxy.Type.HTTP, InetSocketAddress(proxyHost, proxyPort))
+                }
+            }
+        }
     }
 
     /**

@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -156,6 +157,11 @@ private fun TtsTab(onDismiss: () -> Unit) {
     var rate by remember { mutableStateOf(0f) }      // -50% .. +50%
     var pitch by remember { mutableStateOf(0f) }     // -20Hz .. +20Hz
     var vol by remember { mutableStateOf(0f) }       // -50% .. +50%
+    
+    // 代理设置
+    var proxyHost by remember { mutableStateOf(WePrefs.getStringOrDef("tts_proxy_host", "")) }
+    var proxyPort by remember { mutableStateOf(WePrefs.getIntOrDef("tts_proxy_port", 0).toString()) }
+    var showProxySettings by remember { mutableStateOf(false) }
 
     // 播放当前合成的预览
     var previewPath by remember { mutableStateOf<String?>(null) }
@@ -166,6 +172,34 @@ private fun TtsTab(onDismiss: () -> Unit) {
     val volArg = "${vol.toInt().let { if (it >= 0) "+$it" else it.toString() }}%"
 
     Column {
+        // 代理设置按钮
+        TextButton(onClick = { showProxySettings = !showProxySettings }) {
+            Text(if (showProxySettings) "隐藏代理设置" else "代理设置 (国内可能需要)")
+        }
+        
+        if (showProxySettings) {
+            OutlinedTextField(
+                value = proxyHost,
+                onValueChange = { proxyHost = it },
+                label = { Text("代理地址 (如 127.0.0.1)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                value = proxyPort,
+                onValueChange = { proxyPort = it.filter { c -> c.isDigit() } },
+                label = { Text("代理端口 (如 10808)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            TextButton(onClick = {
+                WePrefs.putString("tts_proxy_host", proxyHost)
+                WePrefs.putInt("tts_proxy_port", proxyPort.toIntOrNull() ?: 0)
+                showToast("代理设置已保存")
+            }) {
+                Text("保存代理设置")
+            }
+            Spacer(Modifier.padding(top = 8.dp))
+        }
+
         Text("音色", style = MaterialTheme.typography.labelLarge)
         VoiceWorkbench.TTS_VOICES.forEach { (v, label) ->
             Row(
