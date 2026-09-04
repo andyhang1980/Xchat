@@ -228,47 +228,47 @@ object ChatInputBarEnhancements : SwitchFeature(), IResolveDex {
                                     ) {
                                         onDismiss()
 
-                                            if (!WeCurrentConversationApi.value.isGroupChatWxId) {
-                                                showToast("只能在群组里使用!")
-                                                return@ActionItem
-                                            }
+                                        if (!WeCurrentConversationApi.value.isGroupChatWxId) {
+                                            showToast("只能在群组里使用!")
+                                            return@ActionItem
+                                        }
 
-                                            val contacts = WeDatabaseApi
-                                                .getGroupMembers(WeCurrentConversationApi.value)
-                                                .filter { c -> c.wxId != WeApi.selfWxId }
-                                            val content = chatFooter.lastText
+                                        val contacts = WeDatabaseApi
+                                            .getGroupMembers(WeCurrentConversationApi.value)
+                                            .filter { c -> c.wxId != WeApi.selfWxId }
+                                        val content = chatFooter.lastText
 
-                                            val reqBody = buildJsonObject {
-                                                put("1", 1)
-                                                putJsonObject("2") {
-                                                    putJsonObject("1") {
-                                                        put("1", WeCurrentConversationApi.value)
-                                                    }
-                                                    put("2", contacts.joinToString("") { c ->
-                                                        "@${c.nickname} "
-                                                    } + content)
-                                                    put("3", 1)
-                                                    put("4", System.currentTimeMillis() / 1000)
-                                                    put("5", -388413336)
-                                                    put(
-                                                        "6",
-                                                        """<msgsource><atuserlist><![CDATA[${contacts.joinToString(",") { c -> c.wxId }}]]></atuserlist><pua>1</pua><alnode><cf>5</cf><inlenlist>73</inlenlist></alnode><eggIncluded>1</eggIncluded></msgsource>"""
-                                                    )
+                                        val reqBody = buildJsonObject {
+                                            put("1", 1)
+                                            putJsonObject("2") {
+                                                putJsonObject("1") {
+                                                    put("1", WeCurrentConversationApi.value)
                                                 }
-                                            }
-
-                                            WePacketHelper.sendCgi(
-                                                "/cgi-bin/micromsg-bin/newsendmsg",
-                                                522,
-                                                0,
-                                                0,
-                                                reqBody.toString()
-                                            ) {
-                                                onSuccess { _ ->
-                                                    showToast("已发送 (自己无法看到该消息)")
-                                                }
+                                                put("2", contacts.joinToString("") { c ->
+                                                    "@${c.nickname} "
+                                                } + content)
+                                                put("3", 1)
+                                                put("4", System.currentTimeMillis() / 1000)
+                                                put("5", -388413336)
+                                                put(
+                                                    "6",
+                                                    """<msgsource><atuserlist><![CDATA[${contacts.joinToString(",") { c -> c.wxId }}]]></atuserlist><pua>1</pua><alnode><cf>5</cf><inlenlist>73</inlenlist></alnode><eggIncluded>1</eggIncluded></msgsource>"""
+                                                )
                                             }
                                         }
+
+                                        WePacketHelper.sendCgi(
+                                            "/cgi-bin/micromsg-bin/newsendmsg",
+                                            522,
+                                            0,
+                                            0,
+                                            reqBody.toString()
+                                        ) {
+                                            onSuccess { _ ->
+                                                showToast("已发送 (自己无法看到该消息)")
+                                            }
+                                        }
+                                    }
 
 //                                        ActionItem(
 //                                            icon = MaterialSymbols.Outlined.Visibility_off,
