@@ -1,5 +1,10 @@
 package io.github.xchat.features.items.moments
 
+import io.github.xchat.dexkit.abc.IResolveDex
+import io.github.xchat.dexkit.dsl.dexMethod
+import io.github.xchat.features.core.SwitchFeature
+import org.luckypray.dexkit.DexKitBridge
+
 import io.github.xchat.features.core.Feature
 import io.github.xchat.utils.TargetProcesses
 import io.github.xchat.utils.WeLogger

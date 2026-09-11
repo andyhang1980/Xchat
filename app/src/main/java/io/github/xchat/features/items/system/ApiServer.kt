@@ -1,5 +1,9 @@
 package io.github.xchat.features.items.system
 
+import io.github.xchat.dexkit.abc.IResolveDex
+import io.github.xchat.dexkit.dsl.dexMethod
+import org.luckypray.dexkit.DexKitBridge
+
 import io.github.xchat.features.api.core.WeApi
 import io.github.xchat.features.core.SwitchFeature
 import io.github.xchat.utils.WeLogger

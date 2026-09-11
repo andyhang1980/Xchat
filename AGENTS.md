@@ -61,10 +61,10 @@
 ## WCX 项目集成
 
 - WCX 项目 (https://github.com/Johnny520/wcx) 是 WeKit 的二改分支，包含更多功能
-- Xchat 已完整集成 WCX 所有功能模块，共 206 个功能文件
+- Xchat 已完整集成 WCX 几乎所有功能模块，共 205 个功能文件
 - 已添加的 WCX 新功能包括：
   - **朋友圈**：`AntiMomentCommentsDelete`, `AutoRepostMoments`, `MomentAutomationAction/Mode/IntervalRule/ModeRule/TypeRule`, `MomentsAutomationSettings`, `MomentsKeywordFilter`, `OpenDetailsOnItemClick`, `RepostMoments`, `AutoRefresh`, `AlwaysShowInteractionEntry`
-  - **联系人**：`AutoAcceptFriendRequests`, `AutoAddNearbyFriends`, `AutoDndAfterJoinGroup`, `SplitGroupCall`
+  - **联系人**：`AutoAcceptFriendRequests`, `AutoAddNearbyFriends`, `SplitGroupCall`
   - **系统**：`ApiServer`
   - **界面美化**：`ThemeImportExport`, `CustomColorScheme`, `BottomNavBeautify`, `MePageSimplification`, `DialogBlur`, `HideRecentPage`
   - **批量操作**：`BatchAddLabel`, `BatchDbOps`, `BatchDeleteChatHistory`, `BatchDeleteFriends`, `BatchHideConversations`, `BatchMarkAsRead`, `BatchMuteConversations`, `MassSendMessage`

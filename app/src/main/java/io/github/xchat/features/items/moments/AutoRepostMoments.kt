@@ -1,5 +1,7 @@
 package io.github.xchat.features.items.moments
 
+import org.luckypray.dexkit.DexKitBridge
+
 import io.github.xchat.dexkit.abc.IResolveDex
 import io.github.xchat.dexkit.dsl.dexMethod
 import io.github.xchat.features.api.core.WeApi

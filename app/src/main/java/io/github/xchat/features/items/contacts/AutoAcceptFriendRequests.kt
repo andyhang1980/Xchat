@@ -1,5 +1,7 @@
 package io.github.xchat.features.items.contacts
 
+import io.github.xchat.features.core.Feature
+
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import androidx.activity.ComponentActivity
