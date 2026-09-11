@@ -136,7 +136,7 @@ object CustomLocalFriendAvatars : ClickableFeature(), IContactInfoProvider, IRes
     }
 
     // com.tencent.mm.feature.avatar.w.pg; an exception: this doesn't call methodMvvmLoadAvatar
-    private val methodFeatureAvatarSimple1 by dexMethod {
+    private val methodFeatureAvatarSimple1 by dexMethod(allowFailure = true) {
         matcher {
             declaredClass(classAvatarDrawable.clazz)
             paramTypes(
@@ -237,41 +237,57 @@ object CustomLocalFriendAvatars : ClickableFeature(), IContactInfoProvider, IRes
     override fun onEnable() {
         WeContactPrefsScreenApi.addProvider(this)
 
-        listOf(
+        val avatarHookTargets = listOf(
             methodConversationAvatar,
             methodMvvmLoadAvatar1,
             methodMvvmLoadAvatar2,
             methodFeatureAvatarSimple1,
             methodPluginsdkLoadAvatar
-        ).forEach {
-            it.method.hookBefore {
-                val imageView = args.getOrNull(0) as? ImageView ?: return@hookBefore
-//            var wxId = args.getOrNull(1) as? String ?: return@hookBefore
-                val wxId = args.getOrNull(1) as? String ?: return@hookBefore
+        )
 
-                val redirectedId = fallbackUsernameProvider?.invoke(wxId)
-                if (redirectedId != null) {
-//                wxId = redirectedId
-                    args[1] = redirectedId
-                    return@hookBefore
-                }
+        for (delegate in avatarHookTargets) {
+            if (delegate.isPlaceholder) {
+                WeLogger.w(TAG, "skipping avatar hook: ${delegate.key} (placeholder)")
+                continue
+            }
+            try {
+                delegate.method.hookBefore {
+                    val imageView = args.getOrNull(0) as? ImageView ?: return@hookBefore
+                    val wxId = args.getOrNull(1) as? String ?: return@hookBefore
 
-                if (applyCustomAvatar(imageView, wxId, roundAvatarRadiusFactor)) {
-                    result = null
+                    val redirectedId = fallbackUsernameProvider?.invoke(wxId)
+                    if (redirectedId != null) {
+                        args[1] = redirectedId
+                        return@hookBefore
+                    }
+
+                    if (applyCustomAvatar(imageView, wxId, roundAvatarRadiusFactor)) {
+                        result = null
+                    }
                 }
+            } catch (e: Exception) {
+                WeLogger.w(TAG, "failed to hook avatar method, may be affected", e)
             }
         }
 
-        methodHdGallerySetUsername.hookBefore {
-            val username = args.getOrNull(0) as? String ?: return@hookBefore
-            val gallery = thisObject
-            if (applyCustomHdAvatar(gallery, username)) {
-                result = null
-                (gallery as? View)?.let { view ->
-                    view.post { applyCustomHdAvatar(gallery, username) }
-                    view.postDelayed({ applyCustomHdAvatar(gallery, username) }, 300L)
+        if (!methodHdGallerySetUsername.isPlaceholder) {
+            try {
+                methodHdGallerySetUsername.hookBefore {
+                    val username = args.getOrNull(0) as? String ?: return@hookBefore
+                    val gallery = thisObject
+                    if (applyCustomHdAvatar(gallery, username)) {
+                        result = null
+                        (gallery as? View)?.let { view ->
+                            view.post { applyCustomHdAvatar(gallery, username) }
+                            view.postDelayed({ applyCustomHdAvatar(gallery, username) }, 300L)
+                        }
+                    }
                 }
+            } catch (e: Exception) {
+                WeLogger.w(TAG, "failed to hook methodHdGallerySetUsername", e)
             }
+        } else {
+            WeLogger.w(TAG, "skipping hook methodHdGallerySetUsername: method not found")
         }
     }
 

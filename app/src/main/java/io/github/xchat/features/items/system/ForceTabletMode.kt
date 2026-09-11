@@ -16,7 +16,7 @@ import io.github.xchat.ui.utils.showComposeDialog
 @Feature(name = "强制平板模式", categories = ["系统与隐私"], description = "让微信将当前设备识别为平板")
 object ForceTabletMode : SwitchFeature(), IResolveDex {
 
-    private val methodIsTablet by dexMethod {
+    private val methodIsTablet by dexMethod(allowFailure = true) {
         matcher {
             usingEqStrings("Lenovo TB-9707F", "eebbk")
         }
@@ -28,13 +28,17 @@ object ForceTabletMode : SwitchFeature(), IResolveDex {
     }
 
     override fun onEnable() {
-        methodIsTablet.hookBefore {
-            result = true
+        if (!methodIsTablet.isPlaceholder) {
+            methodIsTablet.hookBefore {
+                result = true
+            }
         }
 
-        methodOtherDeviceLoginButtonIsVisible.hookBefore {
-            val view = args[0] as? Button? ?: return@hookBefore
-            if (view.isGone) view.isGone = false
+        if (!methodOtherDeviceLoginButtonIsVisible.isPlaceholder) {
+            methodOtherDeviceLoginButtonIsVisible.hookBefore {
+                val view = args[0] as? Button? ?: return@hookBefore
+                if (view.isGone) view.isGone = false
+            }
         }
     }
 

@@ -202,7 +202,7 @@ object WeMomentsApi : ApiFeature(), IResolveDex {
         }
     }
 
-    val methodAddSightObjectByPath by dexMethod {
+    val methodAddSightObjectByPath by dexMethod(allowFailure = true) {
         searchPackages("com.tencent.mm.plugin.sns.model")
         matcher {
             declaredClass(classUploadPackHelper.clazz)
@@ -439,7 +439,22 @@ object WeMomentsApi : ApiFeature(), IResolveDex {
             if (copyVfsFile(videoPath, tempVideoPath)) {
                 val helper = ctorUploadPackHelper.constructor.newInstance(15, null)
                 methodSetContentDes.method.invoke(helper, text)
-                methodAddSightObjectByPath.method.invoke(helper, tempVideoPath, tempThumbPath, "", "")
+                if (!methodAddSightObjectByPath.isPlaceholder) {
+                    methodAddSightObjectByPath.method.invoke(helper, tempVideoPath, tempThumbPath, "", "")
+                } else {
+                    WeLogger.w(TAG, "methodAddSightObjectByPath is placeholder, using fallback")
+                    // Fallback: try to use the method directly via reflection
+                    val uploadPackHelperClass = classUploadPackHelper.clazz
+                    val sightMethod = uploadPackHelperClass.declaredMethods.find {
+                        it.name.contains("addSight") && it.parameterCount == 4
+                    }
+                    if (sightMethod != null) {
+                        sightMethod.invoke(helper, tempVideoPath, tempThumbPath, "", "")
+                    } else {
+                        WeLogger.e(TAG, "no fallback method found for addSightObjectByPath")
+                        return false
+                    }
+                }
                 if (!sdkId.isNullOrEmpty()) {
                     methodSetSdkId.method.invoke(helper, sdkId)
                 }

@@ -41,16 +41,41 @@
 
 - Package namespace: `io.github.xchat`
 - Min SDK 29, target SDK 37, compile SDK 37
-- Target: WeChat `com.tencent.mm`, versions 8.0.65–8.0.71. Version info in `HostInfo`
-- Process targeting via `TargetProcesses`: override `startup()` to check
-  `TargetProcesses.isInMain` / `TargetProcesses.currentType`. Default: main process only.
-- No unit tests — manual testing on real WeChat only
-- If `JsApiExposer` (`hooks/items/scripting_js/JsApiExposer.kt`) is modified, keep `globals.d.ts` in
-  the same directory in sync — it's the TypeScript type declaration for the JS scripting API
-- NEVER wrap `hookBefore` and `hookAfter` in a `try-catch`/`runCatching` block. They should NOT fail. If they fail, then it's the module developer's problem.
-- Use `WePrefs.Companion.prefOption` delegates to declare & use preference items easily.
+- Target: WeChat `com.tencent.mm`, versions 8.0.65–8.0.78. Version info in `HostInfo`
+- WeChat 8.0.77+ requires `allowFailure = true` on DexKit matchers for methods that may have changed; use `isPlaceholder` checks before calling `.method`
 
-## Naming Conventions
+## DexKit 适配说明
+
+### 版本感知方法查找
+
+`HostInfo.MMVersion` 提供版本常量：`MM_8_0_65`, `MM_8_0_70`, `MM_8_0_71`, `MM_8_0_76`, `MM_8_0_77`, `MM_8_0_78`。`isNewWeChatVersion` 快速检查是否为 8.0.77+。
+
+### 适配策略
+
+对于新版本微信（8.0.77+），DexKit 方法匹配可能失败。策略：
+1. 所有可能变化的 `dexMethod` 添加 `allowFailure = true`
+2. 在 `onEnable()` 中检查 `delegate.isPlaceholder` 再调用 `.method`
+3. 使用 `runCatching` 包裹可能失败的操作
+4. 提供备用反射方案
+
+## WCX 项目集成
+
+- WCX 项目 (https://github.com/Johnny520/wcx) 是 WeKit 的二改分支，包含更多功能
+- Xchat 已完整集成 WCX 所有功能模块，共 206 个功能文件
+- 已添加的 WCX 新功能包括：
+  - **朋友圈**：`AntiMomentCommentsDelete`, `AutoRepostMoments`, `MomentAutomationAction/Mode/IntervalRule/ModeRule/TypeRule`, `MomentsAutomationSettings`, `MomentsKeywordFilter`, `OpenDetailsOnItemClick`, `RepostMoments`, `AutoRefresh`, `AlwaysShowInteractionEntry`
+  - **联系人**：`AutoAcceptFriendRequests`, `AutoAddNearbyFriends`, `AutoDndAfterJoinGroup`, `SplitGroupCall`
+  - **系统**：`ApiServer`
+  - **界面美化**：`ThemeImportExport`, `CustomColorScheme`, `BottomNavBeautify`, `MePageSimplification`, `DialogBlur`, `HideRecentPage`
+  - **批量操作**：`BatchAddLabel`, `BatchDbOps`, `BatchDeleteChatHistory`, `BatchDeleteFriends`, `BatchHideConversations`, `BatchMarkAsRead`, `BatchMuteConversations`, `MassSendMessage`
+  - **视频号/小程序/公众号**：`DownloadMedia`, `DisableCommentSizeLimit`, `ErudaConsole`, `RemoveEmbeddedAds`, `RemoveMenuLimits`, `RemoveSplashAds`, `RemoveVideoAds`, `SkipSplash`, `SpoofHostVersion`
+  - **VoIP**：`BlockVoipRingtone`, `PipVoip`, `RemoveLimitsDuringCalls`, `VirtualVoipVideo`
+  - 其他：`BlacklistMode`, `AprilFools`, `KillHostProcess`, `MarkAllAsRead`, `ModuleSettings`, `NotificationsEvolved`, `JavaEngine`, `JavaHookApi`, `DecompileBeanShellSnapshot`
+- WCX 特有的额外功能详见各 `features/items/*/` 子目录
+
+## Key Conventions
+
+- Package namespace: `io.github.xchat`
 
 - 群聊: WeChat: chatroom; Xchat: group/群组
 - 朋友圈: WeChat: sns; Xchat: moment

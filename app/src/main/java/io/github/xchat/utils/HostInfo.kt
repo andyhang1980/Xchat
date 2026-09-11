@@ -34,6 +34,32 @@ object HostInfo {
         com.tencent.mm.boot.BuildConfig.BUILD_TAG.contains("GP", ignoreCase = true)
     }
 
+    /**
+     * WeChat version code constants for runtime feature compatibility.
+     * Values based on the versionCode stored in PackageInfo.
+     */
+    object MMVersion {
+        const val MM_8_0_65: Long = 30902000
+        const val MM_8_0_70: Long = 31200000
+        const val MM_8_0_71: Long = 31201000
+        const val MM_8_0_76: Long = 31400000
+        const val MM_8_0_77: Long = 31401000
+        const val MM_8_0_78: Long = 31800000
+
+        /** Current WeChat version code, fetched at runtime */
+        val currentVersionCode: Long get() = HostInfo.versionCode
+
+        fun isAtLeast(version: Long): Boolean = currentVersionCode >= version
+        fun is8_0_77OrAbove(): Boolean = currentVersionCode >= MM_8_0_77
+        fun is8_0_78OrAbove(): Boolean = currentVersionCode >= MM_8_0_78
+    }
+
+    /**
+     * Check if the current WeChat version is 8.0.77 or above,
+     * where several internal method signatures changed.
+     */
+    val isNewWeChatVersion: Boolean get() = MMVersion.is8_0_77OrAbove()
+
     fun init(application: Application) {
         check(!::_info.isInitialized) { "HostInfo has already been initialized" }
 
