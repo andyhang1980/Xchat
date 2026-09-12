@@ -1,4 +1,4 @@
-package io.github.xchat.features.items.moments
+﻿package io.github.xchat.features.items.moments
 
 import io.github.xchat.dexkit.abc.IResolveDex
 import io.github.xchat.dexkit.dsl.dexMethod
@@ -29,7 +29,7 @@ object MomentIntervalRule : SwitchFeature(), IResolveDex {
         }
     }
 
-    override fun resolveDex(dexKit: io.github.xchat.dexkit.DexKitBridge) {
+    override fun resolveDex(dexKit: DexKitBridge) {
         methodGetInterval.find(dexKit, allowFailure = true) {
             matcher {
                 usingEqStrings("MicroMsg.SnsInfo", "get interval")

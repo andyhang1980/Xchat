@@ -1,4 +1,4 @@
-package io.github.xchat.features.items.beautify
+﻿package io.github.xchat.features.items.beautify
 
 import io.github.xchat.dexkit.abc.IResolveDex
 import io.github.xchat.dexkit.dsl.dexMethod
@@ -24,7 +24,7 @@ object DialogBlur : SwitchFeature(), IResolveDex {
         }
     }
 
-    override fun resolveDex(dexKit: io.github.xchat.dexkit.DexKitBridge) {
+    override fun resolveDex(dexKit: DexKitBridge) {
         methodApplyBlur.find(dexKit, allowFailure = true) {
             matcher { usingEqStrings("MicroMsg.UI", "apply blur effect") }
         }

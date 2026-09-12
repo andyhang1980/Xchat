@@ -1,4 +1,4 @@
-package io.github.xchat.features.items.moments
+﻿package io.github.xchat.features.items.moments
 
 import org.luckypray.dexkit.DexKitBridge
 
@@ -24,7 +24,7 @@ object AlwaysShowInteractionEntry : SwitchFeature(), IResolveDex {
         }
     }
 
-    override fun resolveDex(dexKit: io.github.xchat.dexkit.DexKitBridge) {
+    override fun resolveDex(dexKit: DexKitBridge) {
         methodGetEntryVisibility.find(dexKit, allowFailure = true) {
             matcher {
                 usingEqStrings("MicroMsg.SnsInfo", "get entry visibility")

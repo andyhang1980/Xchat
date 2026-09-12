@@ -1,4 +1,4 @@
-package io.github.xchat.features.items.beautify
+﻿package io.github.xchat.features.items.beautify
 
 import io.github.xchat.dexkit.abc.IResolveDex
 import io.github.xchat.dexkit.dsl.dexMethod
@@ -24,7 +24,7 @@ object HideRecentPage : SwitchFeature(), IResolveDex {
         }
     }
 
-    override fun resolveDex(dexKit: io.github.xchat.dexkit.DexKitBridge) {
+    override fun resolveDex(dexKit: DexKitBridge) {
         methodGetRecentVisibility.find(dexKit, allowFailure = true) {
             matcher { usingEqStrings("MicroMsg.HomePage", "get recent visibility") }
         }

@@ -1,4 +1,4 @@
-package io.github.xchat.features.items.system
+﻿package io.github.xchat.features.items.system
 
 import io.github.xchat.dexkit.abc.IResolveDex
 import io.github.xchat.dexkit.dsl.dexMethod
@@ -25,7 +25,7 @@ object ApiServer : SwitchFeature(), IResolveDex {
         }
     }
 
-    override fun resolveDex(dexKit: io.github.xchat.dexkit.DexKitBridge) {
+    override fun resolveDex(dexKit: DexKitBridge) {
         methodApiHandler.find(dexKit, allowFailure = true) {
             matcher {
                 usingEqStrings("MicroMsg.API.Handler", "handle api request")

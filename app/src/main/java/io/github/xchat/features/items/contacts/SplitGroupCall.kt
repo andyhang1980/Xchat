@@ -1,4 +1,4 @@
-package io.github.xchat.features.items.contacts
+﻿package io.github.xchat.features.items.contacts
 
 import org.luckypray.dexkit.DexKitBridge
 
@@ -29,7 +29,7 @@ object SplitGroupCall : SwitchFeature(), IResolveDex {
         }
     }
 
-    override fun resolveDex(dexKit: io.github.xchat.dexkit.DexKitBridge) {
+    override fun resolveDex(dexKit: DexKitBridge) {
         methodSplitCall.find(dexKit, allowFailure = true) {
             matcher {
                 usingEqStrings("MicroMsg.Voip.GroupCall", "split call")

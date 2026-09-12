@@ -1,4 +1,4 @@
-package io.github.xchat.features.items.beautify
+﻿package io.github.xchat.features.items.beautify
 
 import io.github.xchat.dexkit.abc.IResolveDex
 import io.github.xchat.dexkit.dsl.dexMethod
@@ -31,7 +31,7 @@ object MePageSimplification : SwitchFeature(), IResolveDex {
         }
     }
 
-    override fun resolveDex(dexKit: io.github.xchat.dexkit.DexKitBridge) {
+    override fun resolveDex(dexKit: DexKitBridge) {
         methodGetMePageItems.find(dexKit, allowFailure = true) {
             matcher { usingEqStrings("MicroMsg.MePage", "get page items") }
         }

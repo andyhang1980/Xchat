@@ -1,4 +1,4 @@
-package io.github.xchat.features.items.moments
+﻿package io.github.xchat.features.items.moments
 
 import org.luckypray.dexkit.DexKitBridge
 
@@ -25,7 +25,7 @@ object AutoRefresh : SwitchFeature(), IResolveDex {
         }
     }
 
-    override fun resolveDex(dexKit: io.github.xchat.dexkit.DexKitBridge) {
+    override fun resolveDex(dexKit: DexKitBridge) {
         methodRefreshMoment.find(dexKit, allowFailure = true) {
             matcher {
                 usingEqStrings("MicroMsg.SnsInfo", "refresh sns")

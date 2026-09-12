@@ -1,4 +1,4 @@
-package io.github.xchat.features.items.contacts
+﻿package io.github.xchat.features.items.contacts
 
 import org.luckypray.dexkit.DexKitBridge
 
@@ -25,7 +25,7 @@ object AutoAddNearbyFriends : SwitchFeature(), IResolveDex {
         }
     }
 
-    override fun resolveDex(dexKit: io.github.xchat.dexkit.DexKitBridge) {
+    override fun resolveDex(dexKit: DexKitBridge) {
         methodAddNearby.find(dexKit, allowFailure = true) {
             matcher {
                 usingEqStrings("MicroMsg.Nearby", "add nearby")

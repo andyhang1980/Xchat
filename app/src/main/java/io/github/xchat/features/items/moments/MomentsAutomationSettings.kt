@@ -1,4 +1,4 @@
-package io.github.xchat.features.items.moments
+﻿package io.github.xchat.features.items.moments
 
 import io.github.xchat.dexkit.abc.IResolveDex
 import io.github.xchat.dexkit.dsl.dexMethod
@@ -20,7 +20,7 @@ object MomentsAutomationSettings : SwitchFeature(), IResolveDex {
 
     private const val TAG = "MomentsAutoSettings"
 
-    private var enabled by prefOption("mas_enabled", false)
+    private var autoEnabled by prefOption("mas_enabled", false)
     private var triggerType by prefOption("mas_trigger_type", "timed")
 
     private val methodGetSettings by dexMethod(allowFailure = true) {
@@ -29,7 +29,7 @@ object MomentsAutomationSettings : SwitchFeature(), IResolveDex {
         }
     }
 
-    override fun resolveDex(dexKit: io.github.xchat.dexkit.DexKitBridge) {
+    override fun resolveDex(dexKit: DexKitBridge) {
         methodGetSettings.find(dexKit, allowFailure = true) {
             matcher {
                 usingEqStrings("MicroMsg.SnsInfo", "get auto settings")
@@ -45,7 +45,7 @@ object MomentsAutomationSettings : SwitchFeature(), IResolveDex {
         }
         runCatching {
             methodGetSettings.hookBefore {
-                WeLogger.d(TAG, "automation settings: enabled=$enabled, trigger=$triggerType")
+                WeLogger.d(TAG, "automation settings: enabled=$autoEnabled, trigger=$triggerType")
             }
         }.onFailure { e -> WeLogger.e(TAG, "hook failed", e) }
     }
