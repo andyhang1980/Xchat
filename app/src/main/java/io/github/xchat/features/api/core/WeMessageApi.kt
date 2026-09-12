@@ -400,7 +400,7 @@ object WeMessageApi : ApiFeature(), IResolveDex {
     }
     private val setVoiceMethod: Method by lazy {
         classVoiceNameGen.reflekt().firstMethod {
-            parameterCount { it == 3 || it == 4 }
+            parameterCount { it in 3..5 }
             parameters {
                 it[0] == BString && it[1].typeMatches(int) && it[2].typeMatches(int)
             }
@@ -1020,10 +1020,10 @@ object WeMessageApi : ApiFeature(), IResolveDex {
             // 设置语音信息
             val finalDurationMs = durationMs.coerceIn(1, 60_000)
             val setVoiceReceiver = getReceiverForMethod(setVoiceMethod)
-            val setVoiceResult = if (setVoiceMethod.parameterCount == 4) {
-                setVoiceMethod.invoke(setVoiceReceiver, fileName, finalDurationMs, 0, null)
-            } else {
-                setVoiceMethod.invoke(setVoiceReceiver, fileName, finalDurationMs, 0)
+            val setVoiceResult = when (setVoiceMethod.parameterCount) {
+                5 -> setVoiceMethod.invoke(setVoiceReceiver, fileName, finalDurationMs, 0, null, null)
+                4 -> setVoiceMethod.invoke(setVoiceReceiver, fileName, finalDurationMs, 0, null)
+                else -> setVoiceMethod.invoke(setVoiceReceiver, fileName, finalDurationMs, 0)
             } as? Boolean ?: false
 
             if (!setVoiceResult) {
@@ -1055,10 +1055,10 @@ object WeMessageApi : ApiFeature(), IResolveDex {
                     }
                     returnType = BBool
                 }.self
-            if (target.parameterCount == 4) {
-                target.invoke(null, partialPath, actualDuration, 0, null)
-            } else {
-                target.invoke(null, partialPath, actualDuration, 0)
+            when (target.parameterCount) {
+                5 -> target.invoke(null, partialPath, actualDuration, 0, null, null)
+                4 -> target.invoke(null, partialPath, actualDuration, 0, null)
+                else -> target.invoke(null, partialPath, actualDuration, 0)
             }
 
             val service = classSceneVoiceService.clazz.reflekt()
